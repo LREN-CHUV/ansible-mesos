@@ -5,9 +5,9 @@ ansible-mesos - Ansible Playbook for Mesos
 
 ## Overview
 
-The ansible-mesos role supports the installation and configuration of a mesos cluster with options for master, slave or a master-slave setup. It supports Ubuntu and RedHat/Centos. 
+The ansible-mesos role supports the installation and configuration of a mesos cluster with options for leader, follower or a mixed setup. It supports Ubuntu and RedHat/Centos. 
 
-It also allows the setting of specific slave executors so you can run with native docker support.
+It also allows the setting of specific follower executors so you can run with native docker support.
 
 ## Requirements
   
@@ -15,7 +15,7 @@ It also allows the setting of specific slave executors so you can run with nativ
 
 ## Configuration
 
-Combined with [Ansible groups](http://docs.ansible.com/intro_inventory.html#hosts-and-groups) this role makes it easy to specify a multi-node Mesos master for high availability. There is one variable in your playbook to override:
+Combined with [Ansible groups](http://docs.ansible.com/intro_inventory.html#hosts-and-groups) this role makes it easy to specify a multi-node Mesos leader for high availability. There is one variable in your playbook to override:
 
 * ```zookeeper_hostnames``` specifies the list of zookeeper nodes used by Mesos for HA. By default this is the current node hostname and the default zookeeper port ```localhost:2181```. It can be constructed in your playbook by combining all nodes in your zookeeper group:
 
@@ -27,6 +27,6 @@ You may also want to specify a ```mesos_quorum``` value of ```n/2 + 1```, where 
 
 ### Docker Support
 
-Docker is only required on slave nodes and is not installed by default. To use docker with Mesos ensure that docker is installed on slave nodes. You can then set ```mesos_containerizers: "docker,mesos"``` for slave nodes.
+Docker is only required on follower nodes and is not installed by default. To use docker with Mesos ensure that docker is installed on follower nodes. You can then set ```mesos_containerizers: "docker,mesos"``` for follower nodes.
 
 See the ```vars/main.yml``` file for specific role settings and [the Mesos configuration page for Mesos settings](http://mesos.apache.org/documentation/latest/configuration/).

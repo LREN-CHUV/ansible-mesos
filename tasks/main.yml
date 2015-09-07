@@ -2,13 +2,69 @@
 # Here we are using the debian package if debian
 - include_vars: "{{ ansible_os_family }}.yml"
 
-- include: common.yml
+- debug: "msg=Install Mode is {{mesos_mode}}"
 
 # Here we are using the debian package if debian
 - include: Debian.yml
   when: ansible_os_family == "Debian"
+  tags:
+    - mesos
+    - bootstrap
 
 - include: RedHat.yml
   when: ansible_os_family == "RedHat"
+  tags:
+    - mesos
+    - bootstrap
 
-- include: mesos.yml
+# == Work Dir for replicated log
+- name: create work dir
+  file: path={{ mesos_work_dir }} state=directory
+
+# == Configure and recreate
+- name: Mesos default config file
+  template: src=defaults.j2 dest=/etc/default/mesos
+  notify:
+    - restart mesos leader
+    - restart mesos follower
+
+- name: configure /etc/mesos/zk
+  sudo: yes
+  copy:
+    content: "zk://{{ mesos_zk_dns }}:{{ mesos_zk_port }}/{{ mesos_zk_chroot }}"
+    dest: /etc/mesos/zk
+  tags:
+    - mesos
+
+- name: configure /etc/mesos/hostname
+  sudo: yes
+  copy:
+    content: "{{ inventory_hostname }}"
+    dest: /etc/mesos/hostname
+    mode: 0600
+  tags:
+    - mesos
+
+- name: disable mesos leader
+  sudo: yes
+  service:
+    name: mesos-master
+    enabled: no
+  when: mesos_mode == "follower"
+  tags:
+    - mesos
+
+- name: disable mesos follower
+  sudo: yes
+  service:
+    name: mesos-slave
+    enabled: no
+  when: mesos_mode == "leader"
+  tags:
+    - mesos
+
+- include: leader.yml
+  when: mesos_mode == "leader" or mesos_mode == "mixed"
+
+- include: follower.yml
+  when: mesos_mode == "follower" or mesos_mode == "mixed"

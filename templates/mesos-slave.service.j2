@@ -1,13 +1,21 @@
 # {{ansible_managed}}
 
 [Unit]
-Description=mesos slave
+Description=Mesos Slave
+After=network.target
+Wants=network.target
 
 [Service]
 Type=simple
 User=mesos
 Group=mesos
 ExecStart=/usr/bin/mesos-init-wrapper slave
+KillMode=process
+Restart=always
+RestartSec=20
+LimitNOFILE=16384
+CPUAccounting=true
+MemoryAccounting=true
 TimeoutSec=300
 
 [Install]

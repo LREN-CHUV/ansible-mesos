@@ -1,0 +1,43 @@
+---
+
+- debug: var=groups
+
+- name: configure leader defaults
+  sudo: yes
+  template:
+    src: master-defaults.j2
+    dest: /etc/default/mesos-master
+  notify:
+    - restart mesos leader
+  tags:
+    - mesos
+
+- name: delete leader credentials
+  sudo: yes
+  file:
+    dest: /etc/mesos/credentials
+    state: absent
+  tags:
+    - mesos
+
+- name: Check if upstart exists
+  stat: path=/etc/init/
+  register: etc_init
+
+- name: Mesos master upstart script
+  template: src=init-mesos-master.j2 dest=/etc/init/mesos-master.conf
+  when: (mesos_mode == "master" or mesos_mode == "mixed") and etc_init.stat.exists == true
+  notify:
+    - restart mesos leader
+
+- name: Check if systemd exists
+  stat: path=/usr/lib/systemd/system/
+  register: systemd_check
+
+- name: Mesos master systemd script
+  template: src=mesos-master.service.j2 dest=/usr/lib/systemd/system/mesos-master.service
+  when: (mesos_mode == "master" or mesos_mode == "mixed") and systemd_check.stat.exists == true
+  notify:
+    - restart mesos leader
+
+# TODO set /etc/mesos-master/quorum or delete it

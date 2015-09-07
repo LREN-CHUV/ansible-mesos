@@ -1,0 +1,101 @@
+---
+- name: disable mesos leader
+  sudo: yes
+  service:
+    name: mesos-master
+    enabled: no
+  when: mesos_mode == "follower"
+  tags:
+    - mesos
+
+- name: set containerizers
+  sudo: yes
+  copy:
+    content: "{{ mesos_containerizers }}"
+    dest: /etc/mesos-slave/containerizers
+  notify: restart mesos follower
+  tags:
+    - mesos
+
+- name: set ip
+  sudo: yes
+  copy:
+    content: "{{ private_ipv4 }}"
+    dest: /etc/mesos-slave/ip
+  notify: restart mesos follower
+  tags:
+    - mesos
+
+- name: delete credential
+  sudo: yes
+  file:
+    dest: /etc/mesos/follower-credential
+    state: absent
+  notify: restart mesos follower
+  tags:
+    - mesos
+
+- name: set executor registration timeout
+  sudo: yes
+  copy:
+    dest: /etc/mesos-slave/executor_registration_timeout
+    content: "{{ mesos_executor_registration_timeout }}"
+  notify: restart mesos follower
+  tags:
+    - mesos
+
+- name: set follower resources
+  sudo: yes
+  copy:
+    dest: /etc/mesos-slave/resources
+    content: "{{ mesos_resources }}"
+  notify: remove mesos follower metadata
+  tags:
+    - mesos
+
+- name: set follower node id
+  sudo: yes
+  copy:
+    dest: /etc/mesos-slave/attributes
+    content: "node_id:{{ inventory_hostname }}"
+  notify: remove mesos follower metadata
+  tags:
+    - mesos
+
+# TODO
+#- name: configure mesos-slave for networking integration
+#  sudo: yes
+#  copy:
+#    src: executor_environment_variables
+#    dest: /etc/mesos-slave/executor_environment_variables
+#    mode: 0644
+#  notify:
+#    - restart mesos follower
+#  tags:
+#    - mesos
+
+- name: Mesos Slave config file
+  template: src=slave-defaults.j2 dest=/etc/default/mesos-slave
+  when: mesos_mode == "slave" or mesos_mode == "mixed"
+  notify:
+    - restart mesos follower
+
+- name: Check if upstart exists
+  stat: path=/etc/init/
+  register: etc_init
+
+- name: Mesos slave upstart script
+  template: src=init-mesos-slave.j2 dest=/etc/init/mesos-slave.conf
+  when: (mesos_mode == "slave" or mesos_mode == "mixed") and etc_init.stat.exists == true
+  notify:
+    - restart mesos follower
+
+- name: Check if systemd exists
+  stat: path=/usr/lib/systemd/system/
+  register: systemd_check
+
+- name: Mesos slave systemd script
+  template: src=mesos-slave.service.j2 dest=/usr/lib/systemd/system/mesos-slave.service
+  when: (mesos_mode == "slave" or mesos_mode == "mixed") and systemd_check.stat.exists == true
+  notify:
+    - restart mesos follower

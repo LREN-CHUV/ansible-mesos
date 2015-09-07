@@ -1,7 +1,18 @@
 ---
 # i.e. upgrade mesos, templates stay the same...
-- name: Restart mesos-master
+- name: restart mesos leader
   service: name=mesos-master state=restarted
+  become: yes
 
-- name: Restart mesos-slave 
+- name: remove mesos follower metadata
+  become: yes
+  command: "{{ item }}"
+  ignore_errors: yes
+  with_items:
+    - service mesos-slave stop
+    - rm -rf /tmp/mesos/meta/slaves/latest
+    - service mesos-slave stop
+
+- name: restart mesos follower
   service: name=mesos-slave state=restarted
+  become: yes

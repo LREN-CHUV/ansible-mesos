@@ -1,0 +1,8 @@
+# {{ansible_managed}}
+
+PORT={{ mesos_leader_port }}
+ZK=`cat /etc/mesos/zk`
+CLUSTER={{ mesos_cluster }}
+MESOS_QUORUM={{ groups[mesos_leaders_group]|count // 2 + 1 }}
+export MESOS_IP={{ private_ipv4 }}
+export MESOS_HOSTNAME={{ mesos_hostname }}

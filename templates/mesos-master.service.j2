@@ -1,13 +1,23 @@
 # {{ansible_managed}}
 
 [Unit]
-Description=mesos master
+Description=Mesos Master
+{% if mesos_mode == "leader" %}
+After==zookeeper.service
+Wants==zookeeper.service
+{% else %}
+After=network.target
+Wants=network.target
+{% fi %}
 
 [Service]
 Type=simple
 User=mesos
 Group=mesos
 ExecStart=/usr/bin/mesos-init-wrapper master
+Restart=always
+RestartSec=20
+LimitNOFILE=16384
 TimeoutSec=300
 
 [Install]

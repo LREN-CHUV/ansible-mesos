@@ -1,0 +1,12 @@
+# {{ansible_managed}}
+
+# special options supported by
+# mesos-init-wrapper
+LOGS={{mesos_log_dir}}
+WORK_DIR={{mesos_work_dir}}
+ULIMIT="{{mesos_ulimit}}"
+
+# Additional configs
+{% for config_item in mesos_additional_configs %}
+export MESOS_{{config_item.name}}={{config_item.value}}
+{% endfor %}
