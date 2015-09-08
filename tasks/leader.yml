@@ -1,7 +1,5 @@
 ---
 
-- debug: var=groups
-
 - name: configure leader defaults
   sudo: yes
   template:
