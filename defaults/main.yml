@@ -1,5 +1,6 @@
 ---
-mesos_version: "0.23.0"
+mesos_version: "0.24.1"
+mesos_package_version: "0.2.35"
 
 mesos_mode: "leader" # {leader|follower|mixed}
 mesos_log_dir: "/var/log/mesos"
