@@ -4,12 +4,12 @@
 
 - name: Add mesosphere repo
   apt_repository:
-    repo: 'deb http://repos.mesosphere.io/{{ansible_distribution|lower}} {{ansible_distribution_release|lower}} main'
+    repo: "deb http://repos.mesosphere.io/{{ansible_distribution|lower}} {{ansible_distribution_release|lower|replace('wily','vivid')}} main"
     state: present
 
 - name: Install Debian OS packages
   apt:
-    pkg: "mesos={{mesos_version}}-{{mesos_package_version}}.{{ansible_distribution|lower}}{{ansible_distribution_version.split('.')|join('')}}"
+    pkg: "mesos={{mesos_version}}-{{mesos_package_version}}.{{ansible_distribution|lower}}{{ansible_distribution_version.split('.')|join('')|replace('1510','1504')}}"
     state: present
     update_cache: yes
     cache_valid_time: 600
