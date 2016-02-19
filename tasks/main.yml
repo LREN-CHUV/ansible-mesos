@@ -31,7 +31,7 @@
 - name: configure /etc/mesos/zk
   sudo: yes
   copy:
-    content: "zk://{{ mesos_zk_dns }}:{{ mesos_zk_port }}/{{ mesos_zk_chroot }}"
+    content: "{{ mesos_zk }}"
     dest: /etc/mesos/zk
   tags:
     - mesos

@@ -17,6 +17,7 @@ mesos_cluster: "mesos_cluster"
 mesos_zk_dns: "{{ mesos_hostname }}"
 mesos_zk_port: 2181
 mesos_zk_chroot: mesos
+mesos_zk: "zk://{{ mesos_zk_dns }}:{{ mesos_zk_port }}/{{ mesos_zk_chroot }}"
 
 # Additional configurations
 mesos_additional_configs: []
