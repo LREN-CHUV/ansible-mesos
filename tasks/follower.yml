@@ -86,7 +86,7 @@
 
 - name: Mesos slave upstart script
   template: src=init-mesos-slave.j2 dest=/etc/init/mesos-slave.conf
-  when: (mesos_mode == "slave" or mesos_mode == "mixed") and etc_init.stat.exists == true
+  when: (mesos_mode == "follower" or mesos_mode == "mixed") and etc_init.stat.exists == true
   notify:
     - restart mesos follower
 
@@ -96,6 +96,6 @@
 
 - name: Mesos slave systemd script
   template: src=mesos-slave.service.j2 dest=/usr/lib/systemd/system/mesos-slave.service
-  when: (mesos_mode == "slave" or mesos_mode == "mixed") and systemd_check.stat.exists == true
+  when: (mesos_mode == "follower" or mesos_mode == "mixed") and systemd_check.stat.exists == true
   notify:
     - restart mesos follower

@@ -34,7 +34,7 @@
 
 - name: Mesos master systemd script
   template: src=mesos-master.service.j2 dest=/usr/lib/systemd/system/mesos-master.service
-  when: (mesos_mode == "master" or mesos_mode == "mixed") and systemd_check.stat.exists == true
+  when: (mesos_mode == "leader" or mesos_mode == "mixed") and systemd_check.stat.exists == true
   notify:
     - restart mesos leader
 
