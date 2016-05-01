@@ -2,14 +2,26 @@
 - name: Add apt-key
   apt_key: id=E56151BF keyserver=keyserver.ubuntu.com state=present
 
+- name: Set facts for Ubuntu 15.10 wily and Mesos before 0.28
+  set_fact:
+    mesos_repo: "deb http://repos.mesosphere.io/{{ansible_distribution|lower}} {{ansible_distribution_release|lower|replace('wily','vivid')}} main"
+    mesos_pkg: "mesos={{mesos_version}}-{{mesos_package_version}}.{{ansible_distribution|lower}}1504"
+  when: ansible_distribution_release == 'wily' and mesos_version|version_compare('0.28', '<')
+
+- name: Set facts for other Ubuntu versions or Mesos 0.28 or better
+  set_fact:
+    mesos_repo: "deb http://repos.mesosphere.io/{{ansible_distribution|lower}} {{ansible_distribution_release|lower}} main"
+    mesos_pkg: "mesos={{mesos_version}}-{{mesos_package_version}}.{{ansible_distribution|lower}}{{ansible_distribution_version.split('.')|join('')}}"
+  when: ansible_distribution_release != 'wily' or mesos_version|version_compare('0.28', '>=')
+
 - name: Add mesosphere repo
   apt_repository:
-    repo: "deb http://repos.mesosphere.io/{{ansible_distribution|lower}} {{ansible_distribution_release|lower|replace('wily','vivid')}} main"
+    repo: "{{ mesos_repo }}"
     state: present
 
 - name: Install Debian OS packages
   apt:
-    pkg: "mesos={{mesos_version}}-{{mesos_package_version}}.{{ansible_distribution|lower}}{{ansible_distribution_version.split('.')|join('')|replace('1510','1504')}}"
+    pkg: "{{ mesos_pkg }}"
     state: present
     update_cache: yes
     cache_valid_time: 600
