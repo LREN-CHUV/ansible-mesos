@@ -24,7 +24,7 @@
 
 - name: Mesos master upstart script
   template: src=init-mesos-master.j2 dest=/etc/init/mesos-master.conf
-  when: (mesos_mode == "master" or mesos_mode == "mixed") and etc_init.stat.exists == true
+  when: (mesos_mode == "leader" or mesos_mode == "mixed") and etc_init.stat.exists == true
   notify:
     - restart mesos leader
 

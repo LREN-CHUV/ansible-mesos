@@ -76,7 +76,7 @@
 
 - name: Mesos Slave config file
   template: src=slave-defaults.j2 dest=/etc/default/mesos-slave
-  when: mesos_mode == "slave" or mesos_mode == "mixed"
+  when: mesos_mode == "follower" or mesos_mode == "mixed"
   notify:
     - restart mesos follower
 
