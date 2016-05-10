@@ -22,20 +22,33 @@
   stat: path=/etc/init/
   register: etc_init
 
-- name: Mesos master upstart script
-  template: src=init-mesos-master.j2 dest=/etc/init/mesos-master.conf
-  when: (mesos_mode == "leader" or mesos_mode == "mixed") and etc_init.stat.exists == true
-  notify:
-    - restart mesos leader
-
 - name: Check if systemd exists
-  stat: path=/usr/lib/systemd/system/
+  stat:
+    path: '{{ systemd_system_path }}'
   register: systemd_check
 
-- name: Mesos master systemd script
-  template: src=mesos-master.service.j2 dest=/usr/lib/systemd/system/mesos-master.service
-  when: (mesos_mode == "leader" or mesos_mode == "mixed") and systemd_check.stat.exists == true
+- name: Mesos master upstart script
+  template: src=init-mesos-master.j2 dest=/etc/init/mesos-master.conf
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify:
     - restart mesos leader
+
+- name: Mesos master systemd script
+  template:
+    src: mesos-master.service.j2
+    dest: '{{ systemd_system_path }}/mesos-master.service'
+  when: systemd_check.stat.exists == true
+  notify:
+    - restart mesos leader
+
+- name: Restart Mesos master on boot using SystemV
+  command: update-rc.d mesos-master enable
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
+
+- name: Restart Mesos master on boot using systemd
+  command: systemctl enable mesos-master
+  args:
+    creates: /lib/systemd/system/mesos-master.service
+  when: systemd_check.stat.exists == true
 
 # TODO set /etc/mesos-master/quorum or delete it

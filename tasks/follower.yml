@@ -76,7 +76,6 @@
 
 - name: Mesos Slave config file
   template: src=slave-defaults.j2 dest=/etc/default/mesos-slave
-  when: mesos_mode == "follower" or mesos_mode == "mixed"
   notify:
     - restart mesos follower
 
@@ -84,18 +83,31 @@
   stat: path=/etc/init/
   register: etc_init
 
-- name: Mesos slave upstart script
-  template: src=init-mesos-slave.j2 dest=/etc/init/mesos-slave.conf
-  when: (mesos_mode == "follower" or mesos_mode == "mixed") and etc_init.stat.exists == true
-  notify:
-    - restart mesos follower
-
 - name: Check if systemd exists
-  stat: path=/usr/lib/systemd/system/
+  stat:
+    path: '{{ systemd_system_path }}'
   register: systemd_check
 
-- name: Mesos slave systemd script
-  template: src=mesos-slave.service.j2 dest=/usr/lib/systemd/system/mesos-slave.service
-  when: (mesos_mode == "follower" or mesos_mode == "mixed") and systemd_check.stat.exists == true
+- name: Mesos slave upstart script
+  template: src=init-mesos-slave.j2 dest=/etc/init/mesos-slave.conf
+  when: etc_init.stat.exists == True and systemd_check.stat.exists == False
   notify:
     - restart mesos follower
+
+- name: Mesos slave systemd script
+  template:
+    src: mesos-slave.service.j2
+    dest: '{{ systemd_system_path }}/mesos-slave.service'
+  when: systemd_check.stat.exists == True
+  notify:
+    - restart mesos follower
+
+- name: Restart Mesos slave on boot using SystemV
+  command: update-rc.d mesos-slave enable
+  when: etc_init.stat.exists == True and systemd_check.stat.exists == False
+
+- name: Restart Mesos slave on boot using systemd
+  command: systemctl enable mesos-slave
+  args:
+    creates: /lib/systemd/system/mesos-slave.service
+  when: systemd_check.stat.exists == True

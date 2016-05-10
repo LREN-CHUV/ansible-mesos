@@ -1,2 +1,4 @@
 platform_url_name: "ubuntu"
 package_type: "deb"
+
+systemd_system_path: "/etc/systemd/system"

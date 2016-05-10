@@ -8,7 +8,7 @@ Wants==zookeeper.service
 {% else %}
 After=network.target
 Wants=network.target
-{% fi %}
+{% endif %}
 
 [Service]
 Type=simple

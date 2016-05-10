@@ -15,3 +15,4 @@ mesosphere_releases:
 
 mesosphere_repo: "http://repos.mesosphere.com/el/{{ os_version_major }}/noarch/RPMS/{{ mesosphere_releases[os_version_major] }}"
 
+systemd_system_path: "/usr/lib/systemd/system"
