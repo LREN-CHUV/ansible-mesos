@@ -1,70 +1,122 @@
 ---
-- name: disable mesos leader
-  sudo: yes
-  service:
-    name: mesos-master
-    enabled: no
-  when: mesos_mode == "follower"
+
+# Systemd
+
+- name: install mesos-slave unit file
+  become: yes
+  template:
+    src: mesos-slave.service.j2
+    dest: /etc/systemd/system/mesos-slave.service
+  when: systemd_check.stat.exists == true
+  notify:
+    - reload unit files
+    - restart mesos follower
+  tags:
+    - mesos
+    - bootstrap
+
+- name: configure mesos-agent
+  become: yes
+  template:
+    src: mesos-agent.sysconfig.j2
+    dest: /etc/sysconfig/mesos-agent
+  when: systemd_check.stat.exists == true
+  notify: remove mesos follower metadata
   tags:
     - mesos
 
-- name: set containerizers
-  sudo: yes
+- name: write credential
+  when: do_mesos_follower_auth|bool and systemd_check.stat.exists == true
+  become: yes
   copy:
-    content: "{{ mesos_containerizers }}"
-    dest: /etc/mesos-slave/containerizers
-  notify: restart mesos follower
-  tags:
-    - mesos
-
-- name: set ip
-  sudo: yes
-  copy:
-    content: "{{ private_ipv4 }}"
-    dest: /etc/mesos-slave/ip
+    dest: /etc/sysconfig/mesos-agent-credential
+    content: "{{ mesos_follower_principal }} {{ mesos_follower_secret }}"
+    mode: 0600
   notify: restart mesos follower
   tags:
     - mesos
 
 - name: delete credential
-  sudo: yes
+  when: not do_mesos_follower_auth|bool
+  become: yes
   file:
-    dest: /etc/mesos/follower-credential
+    dest: /etc/sysconfig/mesos-agent-credential
     state: absent
   notify: restart mesos follower
   tags:
     - mesos
 
+- name: Restart Mesos agent on boot using systemd
+  command: systemctl enable mesos-slave
+  args:
+    creates: /lib/systemd/system/mesos-slave.service
+  when: systemd_check.stat.exists == True
+
+# Upstart
+
+- name: set containerizers
+  become: yes
+  copy:
+    content: "{{ mesos_containerizers }}"
+    dest: /etc/mesos-slave/containerizers
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
+  notify: restart mesos follower
+  tags:
+    - mesos
+
+- name: set ip
+  become: yes
+  copy:
+    content: "{{ private_ipv4 }}"
+    dest: /etc/mesos-slave/ip
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
+  notify: restart mesos follower
+  tags:
+    - mesos
+
+- name: delete credential
+  become: yes
+  file:
+    dest: /etc/mesos/follower-credential
+    state: absent
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
+  notify: restart mesos follower
+  tags:
+    - mesos
+
 - name: set executor registration timeout
-  sudo: yes
+  become: yes
   copy:
     dest: /etc/mesos-slave/executor_registration_timeout
     content: "{{ mesos_executor_registration_timeout }}"
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: restart mesos follower
   tags:
     - mesos
 
 - name: set follower resources
-  sudo: yes
+  become: yes
   copy:
     dest: /etc/mesos-slave/resources
     content: "{{ mesos_resources }}"
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: remove mesos follower metadata
   tags:
     - mesos
 
 - name: set follower node id
-  sudo: yes
+  become: yes
   copy:
     dest: /etc/mesos-slave/attributes
     content: "node_id:{{ inventory_hostname }}"
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: remove mesos follower metadata
   tags:
     - mesos
 
 # TODO
 #- name: configure mesos-slave for networking integration
-#  sudo: yes
+#  become: yes
 #  copy:
 #    src: executor_environment_variables
 #    dest: /etc/mesos-slave/executor_environment_variables
@@ -74,19 +126,11 @@
 #  tags:
 #    - mesos
 
-- name: Mesos Slave config file
+- name: configure slave defaults
   template: src=slave-defaults.j2 dest=/etc/default/mesos-slave
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify:
     - restart mesos follower
-
-- name: Check if upstart exists
-  stat: path=/etc/init/
-  register: etc_init
-
-- name: Check if systemd exists
-  stat:
-    path: '{{ systemd_system_path }}'
-  register: systemd_check
 
 - name: Mesos slave upstart script
   template: src=init-mesos-slave.j2 dest=/etc/init/mesos-slave.conf
@@ -94,20 +138,6 @@
   notify:
     - restart mesos follower
 
-- name: Mesos slave systemd script
-  template:
-    src: mesos-slave.service.j2
-    dest: '{{ systemd_system_path }}/mesos-slave.service'
-  when: systemd_check.stat.exists == True
-  notify:
-    - restart mesos follower
-
 - name: Restart Mesos slave on boot using SystemV
   command: update-rc.d mesos-slave enable
   when: etc_init.stat.exists == True and systemd_check.stat.exists == False
-
-- name: Restart Mesos slave on boot using systemd
-  command: systemctl enable mesos-slave
-  args:
-    creates: /lib/systemd/system/mesos-slave.service
-  when: systemd_check.stat.exists == True

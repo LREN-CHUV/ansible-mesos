@@ -1,31 +1,78 @@
 ---
 
-- name: configure leader defaults
-  sudo: yes
+# Systemd
+
+- name: install mesos-master unit file
+  become: yes
   template:
-    src: master-defaults.j2
-    dest: /etc/default/mesos-master
+    src: mesos-master.service.j2
+    dest: /etc/systemd/system/mesos-master.service
+  when: systemd_check.stat.exists == true
+  notify:
+    - reload unit files
+    - restart mesos leader
+  tags:
+    - mesos
+    - bootstrap
+
+- name: configure mesos-master
+  become: yes
+  template:
+    src: mesos-master.sysconfig.j2
+    dest: /etc/sysconfig/mesos-master
+  when: systemd_check.stat.exists == true
+  notify:
+    - restart mesos leader
+  tags:
+    - mesos
+
+- name: write leader credentials
+  become: yes
+  when: do_mesos_framework_auth|bool or do_mesos_follower_auth|bool and systemd_check.stat.exists == true
+  template:
+    src: master-credentials.j2
+    dest: /etc/sysconfig/mesos-credentials
+    mode: 0600
   notify:
     - restart mesos leader
   tags:
     - mesos
 
 - name: delete leader credentials
-  sudo: yes
+  become: yes
+  when: not do_mesos_framework_auth|bool and not do_mesos_follower_auth|bool and systemd_check.stat.exists == true
+  file:
+    dest: /etc/sysconfig/mesos-credentials
+    state: absent
+  tags:
+    - mesos
+
+- name: Restart Mesos leader on boot using systemd
+  command: systemctl enable mesos-master
+  args:
+    creates: /lib/systemd/system/mesos-master.service
+  when: systemd_check.stat.exists == true
+
+# Upstart
+
+- name: configure leader defaults
+  become: yes
+  template:
+    src: master-defaults.j2
+    dest: /etc/default/mesos-master
+  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
+  notify:
+    - restart mesos leader
+  tags:
+    - mesos
+
+- name: delete leader credentials
+  become: yes
   file:
     dest: /etc/mesos/credentials
     state: absent
   tags:
     - mesos
-
-- name: Check if upstart exists
-  stat: path=/etc/init/
-  register: etc_init
-
-- name: Check if systemd exists
-  stat:
-    path: '{{ systemd_system_path }}'
-  register: systemd_check
 
 - name: Mesos master upstart script
   template: src=init-mesos-master.j2 dest=/etc/init/mesos-master.conf
@@ -33,22 +80,8 @@
   notify:
     - restart mesos leader
 
-- name: Mesos master systemd script
-  template:
-    src: mesos-master.service.j2
-    dest: '{{ systemd_system_path }}/mesos-master.service'
-  when: systemd_check.stat.exists == true
-  notify:
-    - restart mesos leader
-
 - name: Restart Mesos master on boot using SystemV
   command: update-rc.d mesos-master enable
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
-
-- name: Restart Mesos master on boot using systemd
-  command: systemctl enable mesos-master
-  args:
-    creates: /lib/systemd/system/mesos-master.service
-  when: systemd_check.stat.exists == true
 
 # TODO set /etc/mesos-master/quorum or delete it
