@@ -2,23 +2,23 @@
 
 [Unit]
 Description=Mesos Master
-{% if mesos_mode == "leader" %}
-After==zookeeper.service
-Wants==zookeeper.service
+{% if mesos_mode == "leader" or mesos_mode == "mixed" %}
+After=network.target zookeeper.service
+Wants=zookeeper.service
 {% else %}
 After=network.target
 Wants=network.target
 {% endif %}
 
 [Service]
-Type=simple
-User=mesos
-Group=mesos
-ExecStart=/usr/bin/mesos-init-wrapper master
+EnvironmentFile=/etc/sysconfig/mesos-master
+ExecStart=/usr/sbin/mesos-master ${EXTRA_OPTS}
 Restart=always
 RestartSec=20
 LimitNOFILE=16384
 TimeoutSec=300
+User={{ mesos_owner }}
+Group={{ mesos_group }}
 
 [Install]
 WantedBy=multi-user.target

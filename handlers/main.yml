@@ -1,4 +1,8 @@
 ---
+- name: reload unit files
+  become: yes
+  command: systemctl daemon-reload
+
 # i.e. upgrade mesos, templates stay the same...
 - name: restart mesos leader
   service: name=mesos-master state=restarted

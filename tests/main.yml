@@ -2,7 +2,7 @@
 
 - hosts: localhost
   connection: local
-  sudo: yes
+  become: yes
   
   tasks:
     - name: Wait for Mesosphere to be up

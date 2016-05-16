@@ -2,14 +2,17 @@
 
 [Unit]
 Description=Mesos Slave
+{% if mesos_mode == "mixed" %}
+After=mesos-master.service
+Wants=mesos-master.service
+{% else %}
 After=network.target
 Wants=network.target
+{% endif %}
 
 [Service]
-Type=simple
-User=mesos
-Group=mesos
-ExecStart=/usr/bin/mesos-init-wrapper slave
+EnvironmentFile=/etc/sysconfig/mesos-agent
+ExecStart=/usr/sbin/mesos-slave $EXTRA_OPTS
 KillMode=process
 Restart=always
 RestartSec=20
@@ -17,6 +20,8 @@ LimitNOFILE=16384
 CPUAccounting=true
 MemoryAccounting=true
 TimeoutSec=300
+User={{ mesos_owner }}
+Group={{ mesos_group }}
 
 [Install]
 WantedBy=multi-user.target

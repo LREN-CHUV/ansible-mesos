@@ -1,23 +1,55 @@
 ---
-mesos_version: "0.24.1"
-mesos_package_version: "0.2.35"
+mesos_version: "0.28.1"
+
+# Debian
+mesos_package_version: "2.0.20"
 
 mesos_mode: "leader" # {leader|follower|mixed}
+# conf file settings
 mesos_log_dir: "/var/log/mesos"
-mesos_work_dir: "/var/run/mesos"
-mesos_leader_port: "5050"
-mesos_follower_port: "5051"
+mesos_logging_level: WARNING
+mesos_work_dir: /var/lib/mesos
+mesos_leader_port: 5050
+mesos_follower_port: 5051
+mesos_leader_cmd: mesos-master
+mesos_follower_cmd: mesos-slave
 mesos_containerizers: "docker,mesos"
 mesos_executor_registration_timeout: "5mins"
-mesos_resources: "ports(*):[4000-5000, 31000-32000]"
+
+mesos_resources:
+  - "ports(*):[4000-5000, 31000-32000]"
+
+mesos_attributes:
+  - "node_id:{{ inventory_hostname }}"
+
 mesos_ulimit: "-n 8192"
 mesos_hostname: "{{ inventory_hostname }}"
 mesos_cluster: "mesos_cluster"
 
+mesos_zk_auth: "{% if zk_mesos_user_secret is defined %}{{ zk_mesos_user }}:{{ zk_mesos_user_secret }}@{% endif %}"
 mesos_zk_dns: "{{ mesos_hostname }}"
+mesos_zk_hosts: "{% for host in groups[zookeeper] %}{{ host }}:{{mesos_zk_port}}{% if not loop.last %},{% endif %}{% endfor %}"
 mesos_zk_port: 2181
 mesos_zk_chroot: mesos
-mesos_zk: "zk://{{ mesos_zk_dns }}:{{ mesos_zk_port }}/{{ mesos_zk_chroot }}"
+mesos_zk: "zk://{{ mesos_zk_auth }}{{ mesos_zk_hosts }}/{{ mesos_zk_chroot }}"
+mesos_leaders_group: role=control
+
+mesos_owner: root
+mesos_group: root
+
+mesos_zk_acl_world: "world:anyone:r"
+mesos_zk_acl: "{% if zk_mesos_user_secret is defined %}digest:{{ zk_mesos_user }}:{{ zk_mesos_user_secret_digest}}:cdraw{% endif %}"
+
+mesos_zk_acl_cmd: "zookeepercli -servers localhost:{{ mesos_zk_port }} -auth_usr='super' -auth_pwd='{{ zk_super_user_secret }}' -force -c setacl /{{ mesos_zk_chroot }} '{{ mesos_zk_acl_world }},{{ mesos_zk_acl }}'"
+
+# authentication options
+do_mesos_framework_auth: false
+do_mesos_follower_auth: false
+mesos_credentials: []
+mesos_authenticate_frameworks: "{{ mesos_credentials|length > 0 }}"
+mesos_authenticate_followers: "{{ mesos_follower_secret != '' }}"
+mesos_follower_principal: follower
+mesos_follower_secret: ""
 
 # Additional configurations
 mesos_additional_configs: []
