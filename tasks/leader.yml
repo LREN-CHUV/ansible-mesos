@@ -80,8 +80,8 @@
   notify:
     - restart mesos leader
 
-- name: Restart Mesos master on boot using SystemV
-  command: update-rc.d mesos-master enable
+- name: Restart Mesos master on boot using Upstart
+  service: name=mesos-master enabled=true
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
 
 # TODO set /etc/mesos-master/quorum or delete it

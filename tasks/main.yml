@@ -30,3 +30,5 @@
   when: mesos_mode == "follower" or mesos_mode == "mixed"
   tags:
     - mesos
+
+- meta: flush_handlers

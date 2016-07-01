@@ -5,7 +5,7 @@
   register: etc_init
 
 - name: Check if systemd exists
-  stat: path=/etc/systemd/system/
+  stat: path=/bin/systemctl
   register: systemd_check
 
 # == Work Dir for replicated log

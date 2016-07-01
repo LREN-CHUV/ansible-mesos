@@ -98,7 +98,7 @@
   become: yes
   copy:
     dest: /etc/mesos-slave/resources
-    content: "{{ mesos_resources }}"
+    content: "{{ mesos_resources | join (';') }}"
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: remove mesos follower metadata
   tags:
@@ -138,6 +138,6 @@
   notify:
     - restart mesos follower
 
-- name: Restart Mesos slave on boot using SystemV
-  command: update-rc.d mesos-slave enable
+- name: Restart Mesos slave on boot using Upstart
+  service: name=mesos-slave enabled=true
   when: etc_init.stat.exists == True and systemd_check.stat.exists == False
