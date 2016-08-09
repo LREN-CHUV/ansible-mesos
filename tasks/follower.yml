@@ -15,6 +15,12 @@
     - mesos
     - bootstrap
 
+- name: create sysconfig folder
+  become: yes
+  file:
+    path: /etc/sysconfig
+    state: directory
+
 - name: configure mesos-agent
   become: yes
   template:
