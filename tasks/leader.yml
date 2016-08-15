@@ -2,6 +2,20 @@
 
 # Systemd
 
+- name: cleanup upstart configuration
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/default/mesos-master
+    - /etc/init/mesos-master.conf
+  when: systemd_check.stat.exists == true
+  notify:
+    - restart mesos leader
+  tags:
+    - mesos
+
 - name: install mesos-master unit file
   become: yes
   template:
