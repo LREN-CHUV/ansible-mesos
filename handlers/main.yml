@@ -14,7 +14,7 @@
   ignore_errors: yes
   with_items:
     - service mesos-slave stop
-    - rm -rf /tmp/mesos/meta/slaves/latest
+    - "rm -rf  {{ mesos_work_dir }}/mesos/meta/slaves/latest"
     - service mesos-slave stop
 
 - name: restart mesos follower

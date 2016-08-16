@@ -14,7 +14,8 @@ mesos_follower_port: 5051
 mesos_leader_cmd: mesos-master
 mesos_follower_cmd: mesos-slave
 mesos_containerizers: "docker,mesos"
-mesos_executor_registration_timeout: "5mins"
+mesos_executor_registration_timeout: 10mins
+mesos_isolation: cgroups/cpu,cgroups/mem
 
 mesos_resources:
   - "ports(*):[4000-5000, 31000-32000]"
