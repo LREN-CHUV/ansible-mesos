@@ -3,6 +3,8 @@
 - include_vars: "{{ ansible_os_family }}.yml"
 
 - include: common.yml
+  tags:
+    - mesos
 
 # Here we are using the debian package if debian
 - include: Debian.yml
@@ -32,3 +34,5 @@
     - mesos
 
 - meta: flush_handlers
+  tags:
+    - mesos

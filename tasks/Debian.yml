@@ -8,11 +8,17 @@
     mesos_pkg: "mesos={{mesos_version}}-{{mesos_package_version}}.{{ansible_distribution|lower}}1504"
   when: ansible_distribution_release == 'wily' and mesos_version|version_compare('0.28', '<')
 
-- name: Set facts for other Ubuntu versions or Mesos 0.28 or better
+- name: Set facts for other Ubuntu versions or Mesos 0.28 to <1.2.0
   set_fact:
     mesos_repo: "deb http://repos.mesosphere.io/{{ansible_distribution|lower}} {{ansible_distribution_release|lower}} main"
     mesos_pkg: "mesos={{mesos_version}}-{{mesos_package_version}}.{{ansible_distribution|lower}}{{ansible_distribution_version.split('.')|join('')}}"
-  when: ansible_distribution_release != 'wily' or mesos_version|version_compare('0.28', '>=')
+  when: mesos_version|version_compare('1.2.0', '<') and (ansible_distribution_release != 'wily' or mesos_version|version_compare('0.28', '>='))
+
+- name: Set facts for Mesos 0.28 1.2.0 or better
+  set_fact:
+    mesos_repo: "deb http://repos.mesosphere.io/{{ansible_distribution|lower}} {{ansible_distribution_release|lower}} main"
+    mesos_pkg: "mesos={{mesos_version}}-{{mesos_package_version}}"
+  when: mesos_version|version_compare('1.2.0', '>=')
 
 - name: Add mesosphere repo
   apt_repository:

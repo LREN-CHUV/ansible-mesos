@@ -2,10 +2,12 @@
 - name: reload unit files
   become: yes
   command: systemctl daemon-reload
+  when: ansible_service_mgr == 'systemd'
 
 # i.e. upgrade mesos, templates stay the same...
 - name: restart mesos leader
   service: name=mesos-master state=restarted
+  when: mesos_mode == "leader" or mesos_mode == "mixed"
   become: yes
 
 - name: remove mesos follower metadata
@@ -19,4 +21,5 @@
 
 - name: restart mesos follower
   service: name=mesos-slave state=restarted
+  when: mesos_mode == "follower" or mesos_mode == "mixed"
   become: yes

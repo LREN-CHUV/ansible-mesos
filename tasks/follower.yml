@@ -14,8 +14,6 @@
   when: systemd_check.stat.exists == true
   notify:
     - restart mesos follower
-  tags:
-    - mesos
 
 - name: install mesos-slave unit file
   become: yes
@@ -27,7 +25,6 @@
     - reload unit files
     - restart mesos follower
   tags:
-    - mesos
     - bootstrap
 
 - name: create sysconfig folder
@@ -43,8 +40,6 @@
     dest: /etc/sysconfig/mesos-agent
   when: systemd_check.stat.exists == true
   notify: remove mesos follower metadata
-  tags:
-    - mesos
 
 - name: write credential
   when: do_mesos_follower_auth|bool and systemd_check.stat.exists == true
@@ -54,8 +49,6 @@
     content: "{{ mesos_follower_principal }} {{ mesos_follower_secret }}"
     mode: 0600
   notify: restart mesos follower
-  tags:
-    - mesos
 
 - name: delete credential
   when: not do_mesos_follower_auth|bool
@@ -64,8 +57,6 @@
     dest: /etc/sysconfig/mesos-agent-credential
     state: absent
   notify: restart mesos follower
-  tags:
-    - mesos
 
 - name: Restart Mesos agent on boot using systemd
   command: systemctl enable mesos-slave
@@ -82,8 +73,6 @@
     dest: /etc/mesos-slave/containerizers
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: restart mesos follower
-  tags:
-    - mesos
 
 - name: set ip
   become: yes
@@ -92,8 +81,6 @@
     dest: /etc/mesos-slave/ip
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: restart mesos follower
-  tags:
-    - mesos
 
 - name: delete credential
   become: yes
@@ -102,8 +89,6 @@
     state: absent
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: restart mesos follower
-  tags:
-    - mesos
 
 - name: set executor registration timeout
   become: yes
@@ -112,8 +97,6 @@
     content: "{{ mesos_executor_registration_timeout }}"
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: restart mesos follower
-  tags:
-    - mesos
 
 - name: set follower resources
   become: yes
@@ -122,8 +105,6 @@
     content: "{{ mesos_resources | join (';') }}"
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: remove mesos follower metadata
-  tags:
-    - mesos
 
 - name: set follower node id
   become: yes
@@ -132,8 +113,6 @@
     content: "node_id:{{ inventory_hostname }}"
   when: etc_init.stat.exists == true and systemd_check.stat.exists == false
   notify: remove mesos follower metadata
-  tags:
-    - mesos
 
 # TODO
 #- name: configure mesos-slave for networking integration
