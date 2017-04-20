@@ -1,0 +1,10 @@
+---
+
+- name: Init config -- Delete /etc/mesos - replaced by systemd config
+  become: yes
+  when: systemd_check.stat.exists == true
+  file:
+    dest: /etc/mesos
+    state: absent
+  tags:
+    - mesos

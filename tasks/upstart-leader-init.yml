@@ -1,0 +1,25 @@
+---
+
+- name: configure leader defaults
+  become: yes
+  template:
+    src: master-defaults.j2
+    dest: /etc/default/mesos-master
+  notify:
+    - restart mesos leader
+
+- name: delete leader credentials
+  become: yes
+  file:
+    dest: /etc/mesos/credentials
+    state: absent
+
+- name: Mesos master upstart script
+  template: src=init-mesos-master.j2 dest=/etc/init/mesos-master.conf
+  notify:
+    - restart mesos leader
+
+- name: Restart Mesos master on boot using Upstart
+  service: name=mesos-master enabled=true
+
+# TODO set /etc/mesos-master/quorum or delete it

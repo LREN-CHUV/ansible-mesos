@@ -1,0 +1,25 @@
+---
+
+# == Configure and recreate
+- name: Init config -- Mesos default config file
+  template: src=defaults.j2 dest=/etc/default/mesos
+  notify:
+    - restart mesos leader
+    - restart mesos follower
+
+- name: Init config -- Configure /etc/mesos/zk
+  become: yes
+  copy:
+    content: "{{ mesos_zk }}"
+    dest: /etc/mesos/zk
+  tags:
+    - mesos
+
+- name: Init config -- Configure /etc/mesos/hostname
+  become: yes
+  copy:
+    content: "{{ inventory_hostname }}"
+    dest: /etc/mesos/hostname
+    mode: 0600
+  tags:
+    - mesos

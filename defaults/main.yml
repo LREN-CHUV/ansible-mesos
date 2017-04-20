@@ -3,6 +3,14 @@ mesos_version: "1.2.0"
 
 # Debian
 mesos_package_version: "2.0.2"
+mesosphere_apt_url: "http://repos.mesosphere.com/{{ ansible_distribution | lower }}"
+mesos_os_distribution: "{{ ansible_distribution | lower }}"
+mesos_os_version: "{{ ansible_distribution_version.split('.') | join('') }}"
+mesos_apt_package: "mesos={{ mesos_version }}-{{ mesos_package_version }}{% if mesos_version|version_compare('1.2.0', '<') %}.{{ mesos_os_distribution }}{{ mesos_os_version }}{% endif %}"
+
+# RedHat: EPEL and Mesosphere yum repositories URL
+epel_repo: "https://dl.fedoraproject.org/pub/epel/{{ os_version_major }}/{{ ansible_architecture }}/{{ epel_releases[os_version_major] }}"
+mesosphere_yum_repo: "http://repos.mesosphere.com/el/{{ os_version_major }}/noarch/RPMS/{{ mesosphere_releases[os_version_major] }}"
 
 mesos_mode: "leader" # {leader|follower|mixed}
 # conf file settings
@@ -27,16 +35,17 @@ mesos_ulimit: "-n 8192"
 mesos_hostname: "{{ inventory_hostname }}"
 mesos_cluster: "mesos_cluster"
 
+mesos_owner: root
+mesos_group: root
+
 mesos_zk_auth: "{% if zk_mesos_user_secret is defined %}{{ zk_mesos_user }}:{{ zk_mesos_user_secret }}@{% endif %}"
 mesos_zk_dns: "{{ mesos_hostname }}"
 mesos_zk_hosts: "{% for host in groups[zookeeper] %}{{ host }}:{{mesos_zk_port}}{% if not loop.last %},{% endif %}{% endfor %}"
 mesos_zk_port: 2181
 mesos_zk_chroot: mesos
 mesos_zk: "zk://{{ mesos_zk_auth }}{{ mesos_zk_hosts }}/{{ mesos_zk_chroot }}"
+# TODO: use this
 mesos_leaders_group: role=control
-
-mesos_owner: root
-mesos_group: root
 
 mesos_zk_acl_world: "world:anyone:r"
 mesos_zk_acl: "{% if zk_mesos_user_secret is defined %}digest:{{ zk_mesos_user }}:{{ zk_mesos_user_secret_digest}}:cdraw{% endif %}"

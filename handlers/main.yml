@@ -23,3 +23,7 @@
   service: name=mesos-slave state=restarted
   when: mesos_mode == "follower" or mesos_mode == "mixed"
   become: yes
+
+- name: restart rsyslog
+  service: name=rsyslog state=restarted
+  become: yes

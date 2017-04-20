@@ -5,6 +5,7 @@ Description=Mesos Slave
 {% if mesos_mode == "mixed" %}
 After=mesos-master.service
 Wants=mesos-master.service
+PartOf=mesos-master.service
 {% else %}
 After=network.target
 Wants=network.target

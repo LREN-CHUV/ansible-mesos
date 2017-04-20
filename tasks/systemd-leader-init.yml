@@ -1,0 +1,59 @@
+---
+
+- name: cleanup upstart configuration
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/default/mesos-master
+    - /etc/init/mesos-master.conf
+  notify:
+    - restart mesos leader
+
+- name: install mesos-master unit file
+  become: yes
+  template:
+    src: mesos-master.service.j2
+    dest: /etc/systemd/system/mesos-master.service
+  notify:
+    - reload unit files
+    - restart mesos leader
+  tags:
+    - bootstrap
+
+- name: create sysconfig folder
+  become: yes
+  file:
+    path: /etc/sysconfig
+    state: directory
+
+- name: configure mesos-master
+  become: yes
+  template:
+    src: mesos-master.sysconfig.j2
+    dest: /etc/sysconfig/mesos-master
+  notify:
+    - restart mesos leader
+
+- name: write leader credentials
+  become: yes
+  when: do_mesos_framework_auth|bool or do_mesos_follower_auth|bool
+  template:
+    src: master-credentials.j2
+    dest: /etc/sysconfig/mesos-credentials
+    mode: 0600
+  notify:
+    - restart mesos leader
+
+- name: delete leader credentials
+  become: yes
+  when: not do_mesos_framework_auth|bool and not do_mesos_follower_auth|bool
+  file:
+    dest: /etc/sysconfig/mesos-credentials
+    state: absent
+
+- name: Restart Mesos leader on boot using systemd
+  command: systemctl enable mesos-master
+  args:
+    creates: /lib/systemd/system/mesos-master.service

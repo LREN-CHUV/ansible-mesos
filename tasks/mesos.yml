@@ -1,43 +1,14 @@
 ---
 
-- name: Check if upstart exists
-  stat: path=/etc/init/
-  register: etc_init
-
-- name: Check if systemd exists
-  stat: path=/bin/systemctl
-  register: systemd_check
-
 # == Work Dir for replicated log
 - name: create work dir
   file: path={{ mesos_work_dir }} state=directory
 
-# == Configure and recreate
-- name: Init config -- Mesos default config file
-  template: src=defaults.j2 dest=/etc/default/mesos
-  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
-  notify:
-    - restart mesos leader
-    - restart mesos follower
+- include: upstart-init.yml
+  when: ansible_service_mgr != 'systemd'
 
-- name: Init config -- Configure /etc/mesos/zk
-  become: yes
-  copy:
-    content: "{{ mesos_zk }}"
-    dest: /etc/mesos/zk
-  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
-  tags:
-    - mesos
-
-- name: Init config -- Configure /etc/mesos/hostname
-  become: yes
-  copy:
-    content: "{{ inventory_hostname }}"
-    dest: /etc/mesos/hostname
-    mode: 0600
-  when: etc_init.stat.exists == true and systemd_check.stat.exists == false
-  tags:
-    - mesos
+- include: systemd-init.yml
+  when: ansible_service_mgr == 'systemd'
 
 - name: Disable mesos leader
   become: yes
@@ -54,14 +25,5 @@
     name: mesos-slave
     enabled: no
   when: mesos_mode == "leader"
-  tags:
-    - mesos
-
-- name: Init config -- Delete /etc/mesos - replaced by systemd config
-  become: yes
-  when: systemd_check.stat.exists == true
-  file:
-    dest: /etc/mesos
-    state: absent
   tags:
     - mesos

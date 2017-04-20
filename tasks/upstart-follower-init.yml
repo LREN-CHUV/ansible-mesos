@@ -1,0 +1,68 @@
+---
+
+- name: set containerizers
+  become: yes
+  copy:
+    content: "{{ mesos_containerizers }}"
+    dest: /etc/mesos-slave/containerizers
+  notify: restart mesos follower
+
+- name: set ip
+  become: yes
+  copy:
+    content: "{{ private_ipv4 }}"
+    dest: /etc/mesos-slave/ip
+  notify: restart mesos follower
+
+- name: delete credential
+  become: yes
+  file:
+    dest: /etc/mesos/follower-credential
+    state: absent
+  notify: restart mesos follower
+
+- name: set executor registration timeout
+  become: yes
+  copy:
+    dest: /etc/mesos-slave/executor_registration_timeout
+    content: "{{ mesos_executor_registration_timeout }}"
+  notify: restart mesos follower
+
+- name: set follower resources
+  become: yes
+  copy:
+    dest: /etc/mesos-slave/resources
+    content: "{{ mesos_resources | join (';') }}"
+  notify: remove mesos follower metadata
+
+- name: set follower node id
+  become: yes
+  copy:
+    dest: /etc/mesos-slave/attributes
+    content: "node_id:{{ inventory_hostname }}"
+  notify: remove mesos follower metadata
+
+# TODO
+#- name: configure mesos-slave for networking integration
+#  become: yes
+#  copy:
+#    src: executor_environment_variables
+#    dest: /etc/mesos-slave/executor_environment_variables
+#    mode: 0644
+#  notify:
+#    - restart mesos follower
+#  tags:
+#    - mesos
+
+- name: configure slave defaults
+  template: src=slave-defaults.j2 dest=/etc/default/mesos-slave
+  notify:
+    - restart mesos follower
+
+- name: Mesos slave upstart script
+  template: src=init-mesos-slave.j2 dest=/etc/init/mesos-slave.conf
+  notify:
+    - restart mesos follower
+
+- name: Restart Mesos slave on boot using Upstart
+  service: name=mesos-slave enabled=true
