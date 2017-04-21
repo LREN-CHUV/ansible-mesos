@@ -18,7 +18,7 @@
 - name: Init config -- Configure /etc/mesos/hostname
   become: yes
   copy:
-    content: "{{ inventory_hostname }}"
+    content: "{{ ansible_fqdn }}"
     dest: /etc/mesos/hostname
     mode: 0600
   tags:

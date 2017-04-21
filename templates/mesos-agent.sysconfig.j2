@@ -2,7 +2,7 @@
 MESOS_PORT={{ mesos_follower_port }}
 MESOS_ADVERTISE_IP={{ private_ipv4 }}
 MESOS_IP={{ private_ipv4 }}
-MESOS_HOSTNAME={{ mesos_hostname | default(inventory_hostname) }}
+MESOS_HOSTNAME={{ mesos_hostname | default(ansible_fqdn) }}
 MESOS_LOG_DIR={{ mesos_log_dir }}
 MESOS_LOGGING_LEVEL={{ mesos_logging_level }}
 

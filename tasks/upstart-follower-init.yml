@@ -39,7 +39,7 @@
   become: yes
   copy:
     dest: /etc/mesos-slave/attributes
-    content: "node_id:{{ inventory_hostname }}"
+    content: "node_id:{{ ansible_fqdn }}"
   notify: remove mesos follower metadata
 
 # TODO
