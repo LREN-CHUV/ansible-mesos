@@ -1,4 +1,4 @@
-ansible-mesos - Ansible Playbook for Mesos
+ansible-mesos - Ansible Role installing Apache Mesos
 =============
 
 [![Build Status](https://travis-ci.org/AnsibleShipyard/ansible-mesos.svg?branch=master)](https://travis-ci.org/AnsibleShipyard/ansible-mesos)
