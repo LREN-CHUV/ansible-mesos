@@ -29,10 +29,10 @@ mesos_resources:
   - "ports(*):[4000-5000, 31000-32000]"
 
 mesos_attributes:
-  - "node_id:{{ inventory_hostname }}"
+  - "node_id:{{ mesos_hostname }}"
 
 mesos_ulimit: "-n 8192"
-mesos_hostname: "{{ inventory_hostname }}"
+mesos_hostname: "{{ ansible_fqdn }}"
 mesos_cluster: "mesos_cluster"
 
 mesos_owner: root
