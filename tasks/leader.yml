@@ -20,3 +20,17 @@
 
 - include: systemd-leader-init.yml
   when: ansible_service_mgr == 'systemd'
+
+- meta: flush_handlers
+
+- name: Ensure that mesos-master has started
+  service: name=mesos-master state=started
+  tags: deploy
+  register: mesos_master_running
+
+- name: Validate that mesos-master has started
+  fail:
+    msg: >
+      mesos-master has not started as expected, please check its current status or error messages
+  when: mesos_master_running|changed
+  tags: deploy

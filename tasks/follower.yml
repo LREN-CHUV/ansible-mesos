@@ -20,3 +20,17 @@
 
 - include: systemd-follower-init.yml
   when: ansible_service_mgr == 'systemd'
+
+- meta: flush_handlers
+
+- name: Ensure that mesos-slave has started
+  service: name=mesos-slave state=started
+  tags: deploy
+  register: mesos_slave_running
+
+- name: Validate that mesos-slave has started
+  fail:
+    msg: >
+      mesos-slave has not started as expected, please check its current status or error messages
+  when: mesos_slave_running|changed
+  tags: deploy
