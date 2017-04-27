@@ -2,37 +2,31 @@
 # Here we are using the debian package if debian
 - include_vars: "{{ ansible_os_family }}.yml"
 
-- include: common.yml
-  tags:
-    - mesos
+- debug: msg="Install Mode is {{mesos_mode}}"
+
+- name: Check if upstart exists
+  stat: path=/etc/init/
+  register: etc_init
 
 # Here we are using the debian package if debian
 - include: Debian.yml
   when: ansible_os_family == "Debian"
-  tags:
-    - mesos
-    - bootstrap
+  tags: ['mesos', 'bootstrap']
 
 - include: RedHat.yml
   when: ansible_os_family == "RedHat"
-  tags:
-    - mesos
-    - bootstrap
+  tags: ['mesos', 'bootstrap']
 
-- include: mesos.yml
-  tags:
-    - mesos
+- name: create work dir
+  file: path={{ mesos_work_dir }} state=directory
 
-- include: leader.yml
-  when: mesos_mode == "leader" or mesos_mode == "mixed"
-  tags:
-    - mesos
+- include: upstart-init.yml
+  when: etc_init.stat.exists == true and ansible_service_mgr != 'systemd'
+  tags: ['mesos', 'bootstrap']
 
-- include: follower.yml
-  when: mesos_mode == "follower" or mesos_mode == "mixed"
-  tags:
-    - mesos
+- include: systemd-init.yml
+  when: ansible_service_mgr == 'systemd'
+  tags: ['mesos', 'bootstrap']
 
 - meta: flush_handlers
-  tags:
-    - mesos
+  tags: ['mesos']

@@ -1,10 +1,35 @@
 ---
 
-- name: Init config -- Delete /etc/mesos - replaced by systemd config
+- name: Disable mesos leader
   become: yes
-  when: systemd_check.stat.exists == true
+  command: systemctl disable zookeeper
+  when: mesos_mode == "follower"
+  tags: ['mesos', 'bootstrap']
+
+- name: Disable mesos follower
+  become: yes
+  command: systemctl disable zookeeper
+  when: mesos_mode == "leader"
+  tags: ['mesos', 'bootstrap']
+
+- name: Remove upstart configuration - replaced by systemd config
+  become: yes
   file:
-    dest: /etc/mesos
+    path: "{{ item }}"
     state: absent
-  tags:
-    - mesos
+  with_items:
+    - /etc/default/mesos-master
+    - /etc/default/mesos-slave
+    - /etc/init/mesos-master.conf
+    - /etc/init/mesos-slave.conf
+    - /etc/mesos-slave
+    - /etc/mesos
+  tags: ['mesos', 'bootstrap' ]
+
+- include: systemd-leader-init.yml
+  when: mesos_mode == "leader" or mesos_mode == "mixed"
+  tags: ['mesos', 'bootstrap' ]
+
+- include: systemd-follower-init.yml
+  when: mesos_mode == "follower" or mesos_mode == "mixed"
+  tags: ['mesos', 'bootstrap' ]

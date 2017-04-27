@@ -1,5 +1,23 @@
 ---
 
+- name: Disable mesos leader
+  become: yes
+  service:
+    name: mesos-master
+    enabled: no
+  when: mesos_mode == "follower"
+  tags:
+    - mesos
+
+- name: Disable mesos follower
+  become: yes
+  service:
+    name: mesos-slave
+    enabled: no
+  when: mesos_mode == "leader"
+  tags:
+    - mesos
+
 # == Configure and recreate
 - name: Init config -- Mesos default config file
   template: src=defaults.j2 dest=/etc/default/mesos
@@ -21,5 +39,15 @@
     content: "{{ ansible_fqdn }}"
     dest: /etc/mesos/hostname
     mode: 0600
+  tags:
+    - mesos
+
+- include: upstart-leader-init.yml
+  when: mesos_mode == "leader" or mesos_mode == "mixed"
+  tags:
+    - mesos
+
+- include: upstart-follower-init.yml
+  when: mesos_mode == "follower" or mesos_mode == "mixed"
   tags:
     - mesos

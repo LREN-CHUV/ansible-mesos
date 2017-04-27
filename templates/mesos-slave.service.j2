@@ -3,25 +3,37 @@
 [Unit]
 Description=Mesos Slave
 {% if mesos_mode == "mixed" %}
-After=mesos-master.service
+{# LSC:
+ # - I assume this means that both mesos-master AND ZooKeeper are running
+ #   locally
+ # - Can't use the following, as it will fail to restart the downstream
+ #   services in case of failure and proper restart of the upstream services.
+ #}
+#BindsTo=mesos-master.service
+
 Requires=mesos-master.service
+After=mesos-master.service
 {% else %}
+Requires=network.target
 After=network.target
-Wants=network.target
 {% endif %}
+{# LSC: Make sure that we are restarted if our upstream dependencies are
+ # restarted.
+ #}
+PartOf=mesos-master.service zookeeper.service network.target
 
 [Service]
+Type=simple
+User={{ mesos_owner }}
+Group={{ mesos_group }}
 EnvironmentFile=/etc/sysconfig/mesos-agent
 ExecStart=/usr/sbin/mesos-slave $EXTRA_OPTS
-KillMode=process
-Restart=always
+Restart=on-failure
 RestartSec=20
+TimeoutSec=60
 LimitNOFILE=16384
 CPUAccounting=true
 MemoryAccounting=true
-TimeoutSec=300
-User={{ mesos_owner }}
-Group={{ mesos_group }}
 
 [Install]
 WantedBy=multi-user.target
