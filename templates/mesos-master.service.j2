@@ -2,23 +2,37 @@
 
 [Unit]
 Description=Mesos Master
-{% if mesos_mode == "leader" or mesos_mode == "mixed" %}
-After=network.target zookeeper.service
-Wants=zookeeper.service
+{% if mesos_mode == "mixed" %}
+{# LSC:
+ # - I assume this means that  ZooKeeper is running locally
+ # - Can't use the following, as it will fail to restart the downstream
+ #   services in case of failure and proper restart of the upstream services.
+ #}
+#BindsTo=zookeeper.service
+
+Requires=zookeeper.service
+After=zookeeper.service
 {% else %}
+Requires=network.target
 After=network.target
-Wants=network.target
 {% endif %}
+{# LSC: Make sure that we are restarted if our upstream dependencies are
+ # restarted.
+ #}
+PartOf=zookeeper.service network.target
 
 [Service]
-EnvironmentFile=/etc/sysconfig/mesos-master
-ExecStart=/usr/sbin/mesos-master ${EXTRA_OPTS}
-Restart=always
-RestartSec=20
-LimitNOFILE=16384
-TimeoutSec=300
+Type=simple
 User={{ mesos_owner }}
 Group={{ mesos_group }}
+EnvironmentFile=/etc/sysconfig/mesos-master
+ExecStart=/usr/sbin/mesos-master ${EXTRA_OPTS}
+Restart=on-failure
+RestartSec=20
+TimeoutSec=30
+LimitNOFILE=16384
+CPUAccounting=true
+MemoryAccounting=true
 
 [Install]
 WantedBy=multi-user.target
