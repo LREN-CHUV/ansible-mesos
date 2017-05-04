@@ -2,7 +2,7 @@
 
 - name: Init config -- Delete /etc/mesos - replaced by systemd config
   become: yes
-  when: systemd_check.stat.exists == true
+  when: ansible_service_mgr == 'systemd'
   file:
     dest: /etc/mesos
     state: absent
