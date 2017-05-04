@@ -1,0 +1,14 @@
+---
+
+- name: Add apt-key
+  apt_key:
+    id: E56151BF
+    keyserver: "{{ item }}"
+    state: present
+  register: result
+  with_random_choice:
+    - keyserver.ubuntu.com
+    - hkp://keyserver.ubuntu.com:80
+    - hkp://pool.sks-keyservers.net:80
+
+- debug: var=result

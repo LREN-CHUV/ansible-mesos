@@ -1,10 +1,12 @@
 ---
-- name: Add apt-key
-  apt_key: id=E56151BF keyserver=keyserver.ubuntu.com state=present
 
-- name: Add mesosphere repo
+- include: apt-key.yml
+  until: result.rc == 0
+  retries: 10
+
+- name: Add Mesosphere repo
   apt_repository:
-    repo: "deb {{ mesosphere_apt_url }} {{ ansible_distribution_release | lower }} main"
+    repo: "{{ mesosphere_apt_repo }}"
     state: present
     update_cache: yes
 
