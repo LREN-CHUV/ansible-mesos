@@ -23,14 +23,21 @@
 
 - meta: flush_handlers
 
-- name: Ensure that mesos-slave has started
+- name: Restart mesos agent
+  service: name=mesos-slave state=restarted enabled=yes
+  tags: deploy
+
+- name: Ensure that mesos agent has started and keeps running
   service: name=mesos-slave state=started
   tags: deploy
   register: mesos_slave_running
+  until: mesos_slave_running.state == 'started' and not mesos_slave_running|changed
+  retries: 2
+  delay: 5
 
-- name: Validate that mesos-slave has started
+- name: Validate that mesos agent is running
   fail:
     msg: >
-      mesos-slave has not started as expected, please check its current status or error messages
-  when: mesos_slave_running|changed
+      Service mesos-slave has not started as expected, please check its current status or error messages
+  when: mesos_slave_running.state != 'started' or mesos_slave_running|changed
   tags: deploy

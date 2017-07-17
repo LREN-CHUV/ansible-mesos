@@ -23,14 +23,21 @@
 
 - meta: flush_handlers
 
-- name: Ensure that mesos-master has started
+- name: Start Mesos master
+  service: name=mesos-master state=started enabled=yes
+  tags: deploy
+
+- name: Ensure that Mesos master has started and keeps running
   service: name=mesos-master state=started
   tags: deploy
   register: mesos_master_running
+  until: mesos_master_running.state == 'started' and not mesos_master_running|changed
+  retries: 2
+  delay: 5
 
-- name: Validate that mesos-master has started
+- name: Validate that Mesos master is running
   fail:
     msg: >
-      mesos-master has not started as expected, please check its current status or error messages
-  when: mesos_master_running|changed
+      Service mesos-master has not started as expected, please check its current status or error messages
+  when: mesos_master_running.state != 'started' or mesos_master_running|changed
   tags: deploy
