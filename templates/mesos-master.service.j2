@@ -5,6 +5,7 @@ Description=Mesos Master
 {% if mesos_mode == "leader" or mesos_mode == "mixed" %}
 After=network.target zookeeper.service
 Wants=zookeeper.service
+PartOf=zookeeper.service
 {% else %}
 After=network.target
 Wants=network.target
