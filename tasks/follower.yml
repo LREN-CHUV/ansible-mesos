@@ -41,3 +41,19 @@
       Service mesos-slave has not started as expected, please check its current status or error messages
   when: mesos_slave_running.state != 'started' or mesos_slave_running|changed
   tags: deploy
+
+- name: Create user groups for executing Mesos tasks
+  group:
+    name: '{{ item.group }}'
+    state: present
+  with_items: '{{ mesos_follower_exec_users }}'
+
+- name: Create users for executing Mesos tasks
+  user:
+    name: '{{ item.user }}'
+    uid: '{{ item.user_id | default(omit)}}'
+    group: '{{ item.group }}'
+    groups: '{{ item.groups | default(omit)}}'
+    create_home: no
+    system: yes
+  with_items: '{{ mesos_follower_exec_users }}'

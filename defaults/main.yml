@@ -62,6 +62,11 @@ mesos_authenticate_followers: "{{ mesos_follower_secret != '' }}"
 mesos_follower_principal: follower
 mesos_follower_secret: ""
 
+# Additional users to create that will be used by the follower executor to launch tasks
+mesos_follower_exec_users:
+  - user: marathon
+    group: marathon
+
 # Additional configurations
 mesos_additional_configs: []
   # For example:
