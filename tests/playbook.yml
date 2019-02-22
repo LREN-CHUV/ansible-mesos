@@ -10,5 +10,4 @@
   roles:
     - {role: ../../, mesos_mode: "mixed"}
 
-- include: main.yml
-
+- import_tasks: main.yml

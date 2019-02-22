@@ -1,6 +1,6 @@
 ---
 
-- include: apt-key.yml
+- import_tasks: apt-key.yml
   until: result.rc == 0
   retries: 10
 

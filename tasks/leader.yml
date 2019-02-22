@@ -15,10 +15,10 @@
 
 - meta: flush_handlers
 
-- include: upstart-leader-init.yml
+- include_tasks: upstart-leader-init.yml
   when: ansible_service_mgr != 'systemd'
 
-- include: systemd-leader-init.yml
+- include_tasks: systemd-leader-init.yml
   when: ansible_service_mgr == 'systemd'
 
 - meta: flush_handlers
@@ -31,7 +31,7 @@
   service: name=mesos-master state=started
   tags: deploy
   register: mesos_master_running
-  until: mesos_master_running.state == 'started' and not mesos_master_running|changed
+  until: mesos_master_running.state == 'started' and not mesos_master_running is changed
   retries: 2
   delay: 5
 
@@ -39,5 +39,5 @@
   fail:
     msg: >
       Service mesos-master has not started as expected, please check its current status or error messages
-  when: mesos_master_running.state != 'started' or mesos_master_running|changed
+  when: mesos_master_running.state != 'started' or mesos_master_running is changed
   tags: deploy

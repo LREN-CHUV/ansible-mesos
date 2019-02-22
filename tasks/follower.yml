@@ -15,10 +15,10 @@
 
 - meta: flush_handlers
 
-- include: upstart-follower-init.yml
+- include_tasks: upstart-follower-init.yml
   when: ansible_service_mgr != 'systemd'
 
-- include: systemd-follower-init.yml
+- include_tasks: systemd-follower-init.yml
   when: ansible_service_mgr == 'systemd'
 
 - meta: flush_handlers
@@ -31,7 +31,7 @@
   service: name=mesos-slave state=started
   tags: deploy
   register: mesos_slave_running
-  until: mesos_slave_running.state == 'started' and not mesos_slave_running|changed
+  until: mesos_slave_running.state == 'started' and not mesos_slave_running is changed
   retries: 2
   delay: 5
 
@@ -39,7 +39,7 @@
   fail:
     msg: >
       Service mesos-slave has not started as expected, please check its current status or error messages
-  when: mesos_slave_running.state != 'started' or mesos_slave_running|changed
+  when: mesos_slave_running.state != 'started' or mesos_slave_running is changed
   tags: deploy
 
 - name: Create user groups for executing Mesos tasks

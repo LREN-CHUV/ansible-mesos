@@ -2,33 +2,33 @@
 # Here we are using the debian package if debian
 - include_vars: "{{ ansible_os_family }}.yml"
 
-- include: common.yml
+- import_tasks: common.yml
   tags:
     - mesos
 
 # Here we are using the debian package if debian
-- include: Debian.yml
+- import_tasks: Debian.yml
   when: ansible_os_family == "Debian"
   tags:
     - mesos
     - bootstrap
 
-- include: RedHat.yml
+- import_tasks: RedHat.yml
   when: ansible_os_family == "RedHat"
   tags:
     - mesos
     - bootstrap
 
-- include: mesos.yml
+- import_tasks: mesos.yml
   tags:
     - mesos
 
-- include: leader.yml
+- import_tasks: leader.yml
   when: mesos_mode == "leader" or mesos_mode == "mixed"
   tags:
     - mesos
 
-- include: follower.yml
+- import_tasks: follower.yml
   when: mesos_mode == "follower" or mesos_mode == "mixed"
   tags:
     - mesos
